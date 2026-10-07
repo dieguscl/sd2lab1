@@ -18,12 +18,11 @@ digital/                    Esquemas Digital (.dig), Verilog exportado (.v) e im
 multiplexer4x1/             multiplexer4x1.v, multiplexer4x1.xdc, multiplexer4x1_teste1.v
 descodificador2x4/          descodificador2x4.v, descodificador2x4.xdc, descodificador2x4_teste1.v
 multiplexer16x4/            multiplexer16x4.v, multiplexer16x4.xdc, multiplexer16x4_teste1.v
-simulacao/                  Formas de onda das simulações comportamentais (VCD do xsim + PNG)
+simulacao/                  Formas de onda das simulações comportamentais (VCD do xsim)
 bitstreams/                 Ficheiros .bit para programar a Basys3 (Adept) + relatórios de utilização
 scripts/build.tcl           Recria os 3 projetos Vivado, simula e gera os bitstreams
 scripts/gen_dig.py          Gera os esquemas .dig (com teste da tabela de verdade incluído)
 scripts/ExportVerilog.java  File – Export – Export to Verilog do Digital, por linha de comandos
-scripts/vcd2png.py          Converte o VCD da simulação numa imagem
 ```
 
 Para recriar os projetos Vivado (ficam em `vivado/`, que não está no repositório):
@@ -92,7 +91,7 @@ As mesmas do enunciado:
 
 Isto mostra que só a entrada selecionada chega à saída. No fim, as entradas ficam todas a 1 e a seleção percorre 3→0. O testbench também verifica automaticamente se `Z == D[S]` a cada mudança.
 
-![Simulação do multiplexer 4x1](simulacao/multiplexer4x1_teste1.png)
+> *Captura de ecrã da simulação do multiplexer 4x1 no Vivado: a acrescentar.*
 
 Resultado do xsim: `Simulacao OK: multiplexer4x1 sem erros`.
 
@@ -158,7 +157,7 @@ endmodule
 
 A verificação automática compara `O` com `(0001 << B) & E`.
 
-![Simulação do descodificador 2x4](simulacao/descodificador2x4_teste1.png)
+> *Captura de ecrã da simulação do descodificador 2x4 no Vivado: a acrescentar.*
 
 Resultado do xsim: `Simulacao OK: descodificador2x4 sem erros`.
 
@@ -217,7 +216,7 @@ São precisos 16 bits de dados, por isso são usados os 16 interruptores. A sele
 3. Muda a entrada selecionada → a saída acompanha.
 4. Testa cada bit isoladamente (1, 2, 4, 8) para confirmar que cada um dos 4 mux4x1 está bem ligado.
 
-![Simulação do multiplexer 16x4](simulacao/multiplexer16x4_teste1.png)
+> *Captura de ecrã da simulação do multiplexer 16x4 no Vivado: a acrescentar.*
 
 Resultado do xsim: `Simulacao OK: multiplexer16x4 sem erros`.
 
