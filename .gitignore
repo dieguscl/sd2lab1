@@ -1,0 +1,10 @@
+# Projetos Vivado gerados por scripts/build.tcl
+vivado/
+logs/
+.Xil/
+*.jou
+*.log
+*.str
+webtalk*
+.omc/
+*.pb
