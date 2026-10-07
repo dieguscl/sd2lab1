@@ -1,5 +1,6 @@
-# Projetos Vivado gerados por scripts/build.tcl
-vivado/
+# Pastas geradas pelos projetos Vivado (so os .xpr ficam no repositorio)
+vivado/*/*
+!vivado/*/*.xpr
 logs/
 .Xil/
 *.jou

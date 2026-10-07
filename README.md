@@ -20,12 +20,15 @@ descodificador2x4/          descodificador2x4.v, descodificador2x4.xdc, descodif
 multiplexer16x4/            multiplexer16x4.v, multiplexer16x4.xdc, multiplexer16x4_teste1.v
 simulacao/                  Formas de onda das simulações comportamentais (VCD do xsim)
 bitstreams/                 Ficheiros .bit para programar a Basys3 (Adept) + relatórios de utilização
+vivado/<nome>/<nome>.xpr    Projetos Vivado (abrir com File – Project – Open)
 scripts/build.tcl           Recria os 3 projetos Vivado, simula e gera os bitstreams
 scripts/gen_dig.py          Gera os esquemas .dig (com teste da tabela de verdade incluído)
 scripts/ExportVerilog.java  File – Export – Export to Verilog do Digital, por linha de comandos
 ```
 
-Para recriar os projetos Vivado (ficam em `vivado/`, que não está no repositório):
+Para abrir um projeto no Vivado: **File – Project – Open** e escolher `vivado/<nome>/<nome>.xpr`. Os ficheiros fonte são referidos por caminhos relativos, por isso funcionam em qualquer pasta. Na primeira abertura, a síntese e a implementação aparecem por correr, porque os resultados não estão no repositório.
+
+Para recriar os projetos de raiz, com simulação e bitstreams, de uma só vez:
 
 ```bash
 vivado -mode batch -source scripts/build.tcl
