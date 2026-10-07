@@ -1,6 +1,9 @@
-# Pastas geradas pelos projetos Vivado (so os .xpr ficam no repositorio)
+# Pastas geradas pelos projetos Vivado (ficam os .xpr e as fontes em <nome>.srcs)
 vivado/*/*
 !vivado/*/*.xpr
+!vivado/*/*.srcs/
+vivado/*/*.srcs/**/ip/
+vivado/*/*.srcs/utils_1/
 logs/
 .Xil/
 *.jou
