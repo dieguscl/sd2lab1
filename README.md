@@ -3,7 +3,7 @@
 **Sistemas Digitais 2 · LEEC · ESTSetúbal/IPS · 2026/27**
 Gestão do display da placa Basys3 (Tutorial Digital e Vivado).
 
-Este repositório contém o trabalho da **Aula 1** do enunciado:
+Este repositório contém o trabalho das **Aulas 1 e 2** do enunciado (a Aula 2 está na [secção 5](#5-aula-2--registo-transcodificador-divisor-de-clock-e-contador)). Aula 1:
 
 1. Multiplexer 4x1 — desenho e simulação no Digital, exportação para Verilog, projeto Vivado, testbench, simulação, bitstream (secções 2.1–2.9)
 2. Descodificador 2x4 com enables individuais nas saídas, com o mesmo procedimento (secção 2.10)
@@ -244,3 +244,71 @@ Ensaio na placa:
 - **multiplexer16x4**: os LEDs LD3–LD0 mostram SW3–0 (sem teclas), SW7–4 (BTNR), SW11–8 (BTNL) ou SW15–12 (BTNL+BTNR).
 
 > Falta o ensaio físico na placa e a apresentação ao docente. Têm de ser feitos no laboratório.
+
+---
+
+## 5. Aula 2 — registo, transcodificador, divisor de clock e contador
+
+Todos estes módulos estão no projeto Vivado `vivado/displayBCD/displayBCD.xpr`:
+
+| Ficheiro (`displayBCD.srcs/sources_1/new/`) | Módulo | Testbench (`sim_1/new/`) |
+|---|---|---|
+| `registo4.v` | `Registo4` | `registo4_teste1.v` |
+| `transcod7seg.v` | `Transcod7Seg` | `transcod7seg_teste1.v` |
+| `divisorCLK.v` | `DivisorClock` | `divisorclk_teste1.v` |
+| `contador4.v` | `Contador4` | `contador4_teste1.v` |
+| `displayBCD.v` | `displayBCD` (topo do ensaio na placa) | — |
+
+Para correr todas as simulações e gerar o bitstream:
+
+```bash
+vivado -mode batch -source scripts/build_aula2.tcl
+```
+
+No Vivado em modo gráfico, para simular um módulo: escolher o testbench em *Simulation Sources*, clicar com o botão direito, **Set as Top** e depois **Run Behavioral Simulation**.
+
+### 5.1 Registo de 4 bits com clear e enable (`Registo4`)
+
+Usa 4 primitivas **FDCE**, uma por bit. Cada FDCE é um flip-flop D sensível ao flanco ascendente, com clear assíncrono (`CLR`) e clock enable (`CE`). As portas `Data[3:0]`, `CE`, `Clk`, `CLR` e `DataOut[3:0]` seguem a Fig. 31.
+
+O testbench usa um relógio de 100 MHz e verifica quatro casos:
+
+- com `CE=0` o registo não muda;
+- com `CE=1` carrega `Data` no flanco ascendente;
+- o `CLR` limpa a saída logo, sem esperar pelo flanco (assíncrono);
+- o `CLR` tem prioridade sobre o `CE`.
+
+### 5.2 Transcodificador para 7 segmentos (`Transcod7Seg`)
+
+Entrada `Numero[3:0]`, saída `Segmentos[6:0]`, com `Segmentos[6]` = a … `Segmentos[0]` = g. As saídas são **ativas a Low**: 0 acende o segmento.
+
+| Numero | 0–9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|
+| Símbolo | algarismos da Fig. 30 | d | I (lado esquerdo) | E | G | o | - |
+
+Os símbolos originais de 10 a 15 formam **"dIEGo-"**. O testbench percorre os 16 valores e compara cada saída com uma tabela escrita em lógica positiva, a partir da Fig. 30.
+
+### 5.3 Divisor de clock (`DivisorClock`)
+
+Conta `METADE` ciclos de `ClockIn` e depois inverte `ClockOut`. Assim, f_out = 100 MHz / (2 × METADE). Por omissão `METADE = 25000`, o que dá **2 kHz**, dentro do intervalo pedido (1–10 kHz). Para ver os displays a piscar durante o debug pode usar-se `METADE = 25_000_000`, que dá 2 Hz.
+
+No testbench usa-se `METADE = 5`, porque com 25000 seriam precisos 500 µs de simulação por cada período. O testbench mede o período da saída (100 ns = 10 ciclos de entrada) em 10 períodos seguidos.
+
+### 5.4 Contador de módulo 4 (`Contador4`)
+
+Contador de 2 bits que avança no flanco ascendente de `Clock`: 0, 1, 2, 3, 0, … As saídas são `Q1` e `Q0`. O testbench verifica 3 voltas completas.
+
+### 5.5 Ensaio do transcodificador na Basys3 (`displayBCD`)
+
+| Sinal | Na Basys3 |
+|---|---|
+| `Numero[3:0]` | SW3–SW0 |
+| `Liga[3:0]` | SW15–SW12: escolhem quais displays acendem (os ânodos são ativos a Low) |
+| `Segmentos[6:0]`, `DotPoint` | segmentos CA–CG e DP (o ponto fica apagado) |
+| `Anodos[3:0]` | AN3–AN0 |
+
+Bitstream: [`bitstreams/displayBCD.bit`](bitstreams/displayBCD.bit). Ligar, por exemplo, SW12, que acende o display da direita, e percorrer os valores 0–15 em SW3–SW0.
+
+Resultados do xsim: `Simulacao OK` em `Registo4`, `Transcod7Seg`, `DivisorClock` e `Contador4`.
+
+> *Capturas de ecrã das simulações no Vivado: a acrescentar.*
