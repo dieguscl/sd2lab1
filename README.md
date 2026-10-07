@@ -257,7 +257,7 @@ Todos estes módulos estão no projeto Vivado `vivado/displayBCD/displayBCD.xpr`
 | `transcod7seg.v` | `Transcod7Seg` | `transcod7seg_teste1.v` |
 | `divisorCLK.v` | `DivisorClock` | `divisorclk_teste1.v` |
 | `contador4.v` | `Contador4` | `contador4_teste1.v` |
-| `displayBCD.v` | `displayBCD` (topo do ensaio na placa) | — |
+| `displayBCD.v` | `displayBCD` (topo do ensaio na placa) | `displaybcd_teste1.v` |
 
 Para correr todas as simulações e gerar o bitstream:
 
@@ -271,12 +271,19 @@ No Vivado em modo gráfico, para simular um módulo: escolher o testbench em *Si
 
 Usa 4 primitivas **FDCE**, uma por bit. Cada FDCE é um flip-flop D sensível ao flanco ascendente, com clear assíncrono (`CLR`) e clock enable (`CE`). As portas `Data[3:0]`, `CE`, `Clk`, `CLR` e `DataOut[3:0]` seguem a Fig. 31.
 
-O testbench usa um relógio de 100 MHz e verifica quatro casos:
+O testbench usa um relógio de 100 MHz e tem duas partes:
 
-- com `CE=0` o registo não muda;
-- com `CE=1` carrega `Data` no flanco ascendente;
-- o `CLR` limpa a saída logo, sem esperar pelo flanco (assíncrono);
-- o `CLR` tem prioridade sobre o `CE`.
+1. **Casos dirigidos:**
+   - valor inicial 0;
+   - com `CE=0` o registo não muda;
+   - com `CE=1` carrega `Data` no flanco ascendente;
+   - entre flancos a saída mantém-se;
+   - o `CLR` limpa logo, sem esperar pelo flanco (assíncrono);
+   - o `CLR` tem prioridade sobre o `CE`;
+   - depois de libertar o `CLR`, o registo só carrega no flanco seguinte;
+   - os 16 valores possíveis;
+   - um bit a 1 a andar e um bit a 0 a andar.
+2. **2000 ciclos com entradas aleatórias** (`Data`, `CE` e `CLR`, este em instantes que não coincidem com o relógio). A saída é comparada continuamente com um **modelo de referência**. O testbench também verifica que a saída nunca muda fora de um flanco ascendente, a não ser com `CLR` ativo.
 
 ### 5.2 Transcodificador para 7 segmentos (`Transcod7Seg`)
 
@@ -286,17 +293,38 @@ Entrada `Numero[3:0]`, saída `Segmentos[6:0]`, com `Segmentos[6]` = a … `Segm
 |---|---|---|---|---|---|---|---|
 | Símbolo | algarismos da Fig. 30 | d | I (lado esquerdo) | E | G | o | - |
 
-Os símbolos originais de 10 a 15 formam **"dIEGo-"**. O testbench percorre os 16 valores e compara cada saída com uma tabela escrita em lógica positiva, a partir da Fig. 30.
+Os símbolos originais de 10 a 15 formam **"dIEGo-"**.
+
+O testbench percorre os 16 valores e compara cada saída com uma tabela escrita em lógica positiva, a partir da Fig. 30. Também verifica que:
+
+- nenhum segmento fica indefinido (X ou Z);
+- os **16 símbolos são todos diferentes**, ou seja, nenhum é ambíguo no display;
+- a saída só depende do valor atual. Para isso, repete os 16 valores duas vezes por ordem aleatória.
 
 ### 5.3 Divisor de clock (`DivisorClock`)
 
 Conta `METADE` ciclos de `ClockIn` e depois inverte `ClockOut`. Assim, f_out = 100 MHz / (2 × METADE). Por omissão `METADE = 25000`, o que dá **2 kHz**, dentro do intervalo pedido (1–10 kHz). Para ver os displays a piscar durante o debug pode usar-se `METADE = 25_000_000`, que dá 2 Hz.
 
-No testbench usa-se `METADE = 5`, porque com 25000 seriam precisos 500 µs de simulação por cada período. O testbench mede o período da saída (100 ns = 10 ciclos de entrada) em 10 períodos seguidos.
+O testbench simula várias instâncias ao mesmo tempo, com `METADE` = 1, 2, 5 e 7 (50 períodos cada). Simula também o **valor usado na placa (25000)** durante 12 períodos, ou seja, 6 ms.
+
+Em todos os períodos verifica que:
+
+- a saída está a 1 durante exatamente `METADE` ciclos e a 0 durante outros tantos (duty cycle de 50%);
+- só muda nos flancos ascendentes de `ClockIn`;
+- a frequência na placa é 2000 Hz, dentro do intervalo 1–10 kHz.
+
+O VCD só guarda os primeiros 2 µs, para não ficar com dezenas de MB.
 
 ### 5.4 Contador de módulo 4 (`Contador4`)
 
-Contador de 2 bits que avança no flanco ascendente de `Clock`: 0, 1, 2, 3, 0, … As saídas são `Q1` e `Q0`. O testbench verifica 3 voltas completas.
+Contador de 2 bits que avança no flanco ascendente de `Clock`: 0, 1, 2, 3, 0, … As saídas são `Q1` e `Q0`.
+
+O testbench verifica:
+
+- o estado inicial 0;
+- a sequência durante 100 flancos (25 voltas);
+- que o estado não muda no flanco descendente;
+- que as saídas mudam exatamente uma vez por ciclo, e só no flanco ascendente.
 
 ### 5.5 Ensaio do transcodificador na Basys3 (`displayBCD`)
 
@@ -307,8 +335,32 @@ Contador de 2 bits que avança no flanco ascendente de `Clock`: 0, 1, 2, 3, 0, �
 | `Segmentos[6:0]`, `DotPoint` | segmentos CA–CG e DP (o ponto fica apagado) |
 | `Anodos[3:0]` | AN3–AN0 |
 
+O testbench `displaybcd_teste1.v` percorre as **256 combinações** de `Numero` e `Liga`. Verifica os segmentos, os ânodos (a negação de `Liga`) e que o ponto decimal fica apagado.
+
 Bitstream: [`bitstreams/displayBCD.bit`](bitstreams/displayBCD.bit). Ligar, por exemplo, SW12, que acende o display da direita, e percorrer os valores 0–15 em SW3–SW0.
 
-Resultados do xsim: `Simulacao OK` em `Registo4`, `Transcod7Seg`, `DivisorClock` e `Contador4`.
+### 5.6 Resultados e validação dos testbenches
+
+Resultados do xsim (Vivado 2026.1, com a primitiva FDCE verdadeira):
+
+```
+Simulacao OK: Registo4 sem erros (3056 verificacoes)
+Simulacao OK: Transcod7Seg sem erros (48 verificacoes)
+Simulacao OK: DivisorClock sem erros
+Simulacao OK: Contador4 sem erros (100 ciclos)
+Simulacao OK: displayBCD sem erros (256 combinacoes)
+```
+
+Um testbench que passa não prova nada se também passar com um módulo errado. Por isso, os testbenches foram validados com um **teste de mutações**: introduziram-se, um de cada vez, 19 erros típicos numa cópia dos módulos e confirmou-se que o testbench respetivo falha em todos. Para repetir: `python3 scripts/teste_mutacoes.py` (precisa do Icarus Verilog).
+
+| Módulo | Erros introduzidos (todos detetados) |
+|---|---|
+| Registo4 | CE ignorado · clear síncrono · CLR ignorado · flanco descendente · bits 0 e 1 trocados · bit 3 preso a 0 |
+| Transcod7Seg | 7 com o segmento f aceso · saídas ativas a High · G igual ao 6 · valor 15 em falta |
+| DivisorClock | conta METADE+1 · flanco descendente · METADE por omissão errado (250 → 200 kHz) |
+| Contador4 | conta a descer · módulo 3 · flanco descendente · Q1 e Q0 trocados |
+| displayBCD | ânodos não negados · ponto decimal aceso |
+
+**19/19 erros detetados.**
 
 > *Capturas de ecrã das simulações no Vivado: a acrescentar.*

@@ -15,7 +15,7 @@ foreach f [get_files -quiet -all] {
 
 set src $dir/displayBCD.srcs
 set fontes {registo4.v transcod7seg.v divisorCLK.v contador4.v displayBCD.v}
-set testes {registo4_teste1 transcod7seg_teste1 divisorclk_teste1 contador4_teste1}
+set testes {registo4_teste1 transcod7seg_teste1 divisorclk_teste1 contador4_teste1 displaybcd_teste1}
 foreach f $fontes {
     if {[llength [get_files -quiet $src/sources_1/new/$f]] == 0} { add_files -norecurse $src/sources_1/new/$f }
 }
@@ -38,8 +38,15 @@ foreach t $testes {
     open_vcd $root/simulacao/$t.vcd
     log_vcd [get_objects -r /$t/*]
     restart
-    run all
-    close_vcd
+    if {$t eq "divisorclk_teste1"} {
+        # 6 ms a 100 MHz dariam um VCD com dezenas de MB: regista so os primeiros 2 us
+        run 2us
+        close_vcd
+        run all
+    } else {
+        run all
+        close_vcd
+    }
     close_sim
 }
 set_property top transcod7seg_teste1 [get_filesets sim_1]
